@@ -12,10 +12,10 @@ clear all;
 clc;
 
 % PATHS
-PSYCHTOOLBOX_PATH='/Applications/Psychtoolbox/'; 
-MAINPATH='/Users/Catha/Desktop/OX_for Justin/'; 
-SCRIPTPATH=[MAINPATH 'scripts/MRSI_GRIP-master/'];
-PATHOUT=[MAINPATH 'rawdata/'];
+PSYCHTOOLBOX_PATH='C:\toolbox\Psychtoolbox\'; 
+MAINPATH='C:\Users\jandr\Documents\MATLAB\OX_for Justin\'; 
+SCRIPTPATH=[MAINPATH 'scripts\MRSI_GRIP-master\'];
+PATHOUT=[MAINPATH 'rawdata\'];
 
 addpath(PSYCHTOOLBOX_PATH);
 mkdir(PATHOUT);
@@ -35,12 +35,12 @@ escapeKey = KbName('ESCAPE');
 %                           PROMPT                            %
 %-------------------------------------------------------------%
 
-prompt = {'Subject Number:','Hand','MVC Attempt', 'Timepoint'};
+prompt = {'Subject Number:','Hand','Timepoint'};
 dlgname = 'Run Information';
 LineNo = 1;
-default  =  {'0','L/R','1/2/3', 'pre/post'};
+default  =  {'0','L/R','Pre/Post'};
 answer = inputdlg(prompt,dlgname,LineNo,default); % display dialog
-[subj_num, hand, attempt, timepoint] = deal(answer{:}); % stores all subject answers in separate variables
+[subj_num, hand, timepoint] = deal(answer{:}); % stores all subject answers in separate variables
 
 %% -----------------------------------------------------------%
 %                           SCREEN                            %
@@ -90,7 +90,7 @@ ifi = Screen('GetFlipInterval', window);
 
 % durations in seconds
 force_duration = 3;  % duration of contraction
-iti = 3;  % inter trial interval for fixation cross
+iti = [1 3 3 1];  % inter trial interval for fixation cross
 frame=1;
 
 %% -----------------------------------------------------------%
@@ -141,7 +141,7 @@ for n=1:trialN
     % Draw FIXATION CROSS FOR TASK INTERVAL
     Screen('DrawLines',window,fixcrossLines,fixcrossWidth,black,[screenXcenter,screenYcenter-50])
     DrawFormattedText(window, taskText, 'center', 'center', black);
-    taskOn = Screen('Flip', window, fixOn + iti); 
+    taskOn = Screen('Flip', window, fixOn + iti(n)); 
     
     tic
     force_loc=[];
@@ -199,7 +199,7 @@ for n=1:length(force_glob)
     title({['Repetition: ',num2str(n)],['Mean: ',num2str(force_max_loc(n))]},'interp','none');
 end
 
-good_trials=input('Input the Index of good Trials (e.g. [1,2,3]): ');
+good_trials=input('Input the Index of good Trials (e.g. [1 2 3]): ');
 force_max_glob=mean(force_max_loc(good_trials));
 %% -----------------------------------------------------------%
 %                             SAVE                            %
@@ -207,7 +207,7 @@ force_max_glob=mean(force_max_loc(good_trials));
 cd(SCRIPTPATH);
 save('calibration','force_max_glob');
 
-filename = ['S',subj_num,'_', hand,'_MVC_',timepoint,'_',attempt,'_',datestr(datetime,'yymmdd')];
+filename = ['S',subj_num,'_', hand,'_MVC_',timepoint,'_',datestr(datetime,'yymmdd')];
 cd(PATHOUT);
-save(filename,'force_glob','force_glob_ind','force_max_glob');
+save([filename,'.mat'],'force_glob','force_glob_ind','force_max_glob');
  
