@@ -35,12 +35,12 @@ escapeKey = KbName('ESCAPE');
 %                           PROMPT                            %
 %-------------------------------------------------------------%
 
-prompt = {'Subject Number:','Hand','MVC Attempt', 'Timepoint'};
+prompt = {'Subject Number:','Hand','Timepoint'};
 dlgname = 'Run Information';
 LineNo = 1;
-default  =  {'0','L/R','1/2/3', 'pre/post'};
+default  =  {'0','L/R','pre/post'};
 answer = inputdlg(prompt,dlgname,LineNo,default); % display dialog
-[subj_num, hand, attempt, timepoint] = deal(answer{:}); % stores all subject answers in separate variables
+[subj_num, hand, timepoint] = deal(answer{:}); % stores all subject answers in separate variables
 
 %% -----------------------------------------------------------%
 %                           SCREEN                            %
@@ -90,7 +90,7 @@ ifi = Screen('GetFlipInterval', window);
 
 % durations in seconds
 force_duration = 3;  % duration of contraction
-iti = 3;  % inter trial interval for fixation cross
+iti = [1 30 30 1];  % inter trial interval for fixation cross
 frame=1;
 
 %% -----------------------------------------------------------%
@@ -117,7 +117,7 @@ force_gain = 1; % calibration gain factor in Newtons per ADC unit
 force_offset = 0; % calibration intercept value in Newtons
 
 % DEFINE NUMBER OF REPETITIONS
-trialN=6;
+trialN=3;
 
 %% -----------------------------------------------------------%
 %                      EXPERIMENTAL LOOP                      %
@@ -141,7 +141,7 @@ for n=1:trialN
     % Draw FIXATION CROSS FOR TASK INTERVAL
     Screen('DrawLines',window,fixcrossLines,fixcrossWidth,black,[screenXcenter,screenYcenter-50])
     DrawFormattedText(window, taskText, 'center', 'center', black);
-    taskOn = Screen('Flip', window, fixOn + iti); 
+    taskOn = Screen('Flip', window, fixOn + iti(n)); 
     
     tic
     force_loc=[];
@@ -182,8 +182,13 @@ if ~isempty(dyno), fclose(dyno); end
 %% -----------------------------------------------------------%
 %                        VISUALIZATION                        %
 %-------------------------------------------------------------%
+
 figure('units','normalized','outerposition',[0 0 1 1]);
 for n=1:length(force_glob)
+    % SMOOTH
+    Span=100;
+    force_glob{n}=smoothdata(force_glob{n},Span,'sgolay');
+
     force_max_loc(n)=mean(force_glob{n}(force_glob_ind(n,1):force_glob_ind(n,2)));
     
     subplot(2,3,n); hold on;
@@ -207,7 +212,8 @@ force_max_glob=mean(force_max_loc(good_trials));
 cd(SCRIPTPATH);
 save('calibration','force_max_glob');
 
-filename = ['S',subj_num,'_', hand,'_MVC_',timepoint,'_',attempt,'_',datestr(datetime,'yymmdd')];
+filename = ['S',subj_num,'_', hand,'_MVC_',timepoint,'_',datestr(datetime)];%works on mc
+%filename = ['S',subj_num,'_', hand,'_MVC_',timepoint,'_',datestr(datetime,'yymmdd')];
 cd(PATHOUT);
 save(filename,'force_glob','force_glob_ind','force_max_glob');
  
