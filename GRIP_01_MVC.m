@@ -2,7 +2,7 @@
 % Project owner: Justin Andrushko (PiNG, Oxford)
 % Catharina Zich, Oxford, 6/5/19
 % on Matlab 2018b
-% get MCV
+% get MVC
 
 %%
 
@@ -35,7 +35,7 @@ escapeKey = KbName('ESCAPE');
 %                           PROMPT                            %
 %-------------------------------------------------------------%
 
-prompt = {'Subject Number:','Hand','MVF Attempt', 'Timepoint'};
+prompt = {'Subject Number:','Hand','MVC Attempt', 'Timepoint'};
 dlgname = 'Run Information';
 LineNo = 1;
 default  =  {'0','L/R','1/2/3', 'pre/post'};
@@ -207,7 +207,7 @@ force_max_glob=mean(force_max_loc(good_trials));
 cd(SCRIPTPATH);
 save('calibration','force_max_glob');
 
-filename = ['S',subj_num,'_', hand,'_MVF_',timepoint,'_',attempt,'_',datestr(datetime,'yymmdd')];
+filename = ['S',subj_num,'_', hand,'_MVC_',timepoint,'_',attempt,'_',datestr(datetime,'yymmdd')];
 cd(PATHOUT);
 save(filename,'force_glob','force_glob_ind','force_max_glob');
  
