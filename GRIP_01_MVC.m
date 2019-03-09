@@ -26,6 +26,7 @@ cd(SCRIPTPATH);
 %-------------------------------------------------------------%
 % CONECT TO DEVICE
 dyno = SSQ_connect_dyno;
+%dyno=[];
 
 % KEYS
 KbName('UnifyKeyNames');% Consistent mapping of keyCodes to key names on all operating systems.
@@ -38,7 +39,7 @@ escapeKey = KbName('ESCAPE');
 prompt = {'Subject Number:','Hand','Timepoint'};
 dlgname = 'Run Information';
 LineNo = 1;
-default  =  {'0','L/R','pre/post'};
+default  =  {'0','L-R','pre-post'};
 answer = inputdlg(prompt,dlgname,LineNo,default); % display dialog
 [subj_num, hand, timepoint] = deal(answer{:}); % stores all subject answers in separate variables
 
@@ -85,64 +86,79 @@ fixcrossLines = fixcrossLines';
 %                          TIMING                             %
 %-------------------------------------------------------------%
 
-% REFRESH RATE of monitor
+% REFRESH RATE OF MONITOR
 ifi = Screen('GetFlipInterval', window);
 
-% durations in seconds
-force_duration = 3;  % duration of contraction
-iti = [1 30 30 1];  % inter trial interval for fixation cross
-frame=1;
+force_duration = 3;  % all durations in secs
+interval_duration = [1 3 3];  % inter trial interval for fixation cross
+prep_duration = 1; % prep cue
+frame_duration=1;
+% DEFINE NUMBER OF REPETITIONS
+number_of_trials=3;
 
 %% -----------------------------------------------------------%
 %                    INSTRUCTIONS                             %
 %-------------------------------------------------------------%
 
-% END OF EXPERIMENT TEXT
-startText = 'Instrucitons here.';
-finalText = 'You have completed the task. Thank you';
-relaxText = 'RELAX';
-taskText = 'CONTRACT';
+text_start = 'Instrucitons here.';
+text_final = 'You have completed the task. Thank you';
+text_relax = 'RELAX';
+text_task = 'CONTRACT';
+text_prep = 'PREPARE';
 
-% PROPERTIES
-textSize= 20;
-Screen('TextSize', window, textSize);
+text_size= 20;
+Screen('TextSize', window, text_size);
 Screen('TextFont', window, 'Calibri');
-
-%% -----------------------------------------------------------%
-%                           FORCE                             %
-%-------------------------------------------------------------%
-
-% DEFINE VARIABLES FOR FORCE GRIP
-force_gain = 1; % calibration gain factor in Newtons per ADC unit
-force_offset = 0; % calibration intercept value in Newtons
-
-% DEFINE NUMBER OF REPETITIONS
-trialN=3;
 
 %% -----------------------------------------------------------%
 %                      EXPERIMENTAL LOOP                      %
 %-------------------------------------------------------------%
-% MOUSE
-HideCursor;
+HideCursor; %hide mouse when experiment is on
 
-% DSIPL INSTRUCTION
-DrawFormattedText(window, startText, 'center', 'center', black);
+% DSIPLAY INSTRUCTIONS
+DrawFormattedText(window, text_start, 'center', 'center', black);
 Screen('Flip', window);
 WaitSecs(2);
       
-for n=1:trialN
-    %vbl = Screen('Flip', window); % initial flip
-    
-    % Draw FIXATION CROSS FOR INTERTRIAL INTERVAL
-    Screen('DrawLines',window,fixcrossLines,fixcrossWidth,black,[screenXcenter,screenYcenter-50])
-    DrawFormattedText(window, relaxText, 'center', 'center', black);
+for n=1:number_of_trials   
+    % Draw FIXATION CROSS
+    Screen('DrawLines',window,fixcrossLines,fixcrossWidth,orange,[screenXcenter,screenYcenter-50])
+    DrawFormattedText(window, text_relax, 'center', 'center', black);
     fixOn = Screen('Flip', window); 
     
-    % Draw FIXATION CROSS FOR TASK INTERVAL
-    Screen('DrawLines',window,fixcrossLines,fixcrossWidth,black,[screenXcenter,screenYcenter-50])
-    DrawFormattedText(window, taskText, 'center', 'center', black);
-    taskOn = Screen('Flip', window, fixOn + iti(n)); 
+    % RECORD FORCE DURING REST TO DETERMINE OFFSET 
+    tic
+    base_loc=[];
+    while (1)
+        [keyIsDown, secs, keyCode] = KbCheck;
+        if keyCode(escapeKey) % allows to stop experiment is esc is pressed
+            ShowCursor;
+            sca;
+            return
+        end %if
+        
+        % GET FORCE (single value)
+        base_temp = SSQ_get_force(dyno);
+        
+        % ADD INFO FROM CURRENT FLIP TO THE END OF MATRIX
+        base_loc=[base_loc;base_temp];  
+        
+        if toc >=interval_duration(n)
+            break;
+        end
+    end
     
+    % Draw FIXATION CROSS FOR PREP INTERVAL
+    Screen('DrawLines',window,fixcrossLines,fixcrossWidth,black,[screenXcenter,screenYcenter-50])
+    DrawFormattedText(window, text_prep, 'center', 'center', black);
+    prepOn = Screen('Flip', window, fixOn + prep_duration); 
+    
+    % Draw FIXATION CROSS FOR CONTRACTION INTERVAL
+    Screen('DrawLines',window,fixcrossLines,fixcrossWidth,green,[screenXcenter,screenYcenter-50])
+    DrawFormattedText(window, text_task, 'center', 'center', black);
+    taskOn = Screen('Flip', window, prepOn + interval_duration(n)); 
+    
+    % RECORD FORCE DURING CONTRACTION 
     tic
     force_loc=[];
     while (1)
@@ -153,15 +169,15 @@ for n=1:trialN
             return
         end %if
         
-        % GET AND SCALE FORCE (single value)
-        force_temp = SSQ_get_force(dyno) * force_gain + force_offset;
+        % GET FORCE (single value)
+        force_temp = SSQ_get_force(dyno);
         
         % ADD INFO FROM CURRENT FLIP TO THE END OF MATRIX
         force_loc=[force_loc;force_temp];  
         
-        if toc <=frame
+        if toc <=frame_duration
             force_loc_ind(1)=size(force_loc,1);
-        elseif toc <=force_duration-frame 
+        elseif toc <=force_duration-frame_duration 
             force_loc_ind(2)=size(force_loc,1);
         elseif toc >=force_duration
             break;
@@ -169,9 +185,15 @@ for n=1:trialN
     end %while
     
     % HAND OVER FORCE FROM CURRENT REPETITION
+    base_glob{n}=base_loc;
     force_glob{n}=force_loc;
     force_glob_ind(n,:)=force_loc_ind;
 end
+
+% DSIPLAY FINAL TEXT
+DrawFormattedText(window, text_final, 'center', 'center', black);
+Screen('Flip', window);
+WaitSecs(2);
 
 sca;
 clear Screen;
@@ -182,13 +204,12 @@ if ~isempty(dyno), fclose(dyno); end
 %% -----------------------------------------------------------%
 %                        VISUALIZATION                        %
 %-------------------------------------------------------------%
-
 figure('units','normalized','outerposition',[0 0 1 1]);
-for n=1:length(force_glob)
-    % SMOOTH
+for n=1:length(force_glob)    
+    % SMOOTH FORCE
     Span=100;
     force_glob{n}=smoothdata(force_glob{n},Span,'sgolay');
-
+    % GET MAX
     force_max_loc(n)=mean(force_glob{n}(force_glob_ind(n,1):force_glob_ind(n,2)));
     
     subplot(2,3,n); hold on;
@@ -202,18 +223,21 @@ for n=1:length(force_glob)
     set(gca,'XTickLabel',{'start eval','end eval'});
     xlabel('Time [samples]');ylabel('Force');
     title({['Repetition: ',num2str(n)],['Mean: ',num2str(force_max_loc(n))]},'interp','none');
+    
+    % GET 'OFFSET'
+    base_mean_loc(n)=median(base_glob{n});
 end
 
-good_trials=input('Input the Index of good Trials (e.g. [1,2,3]): ');
+good_trials=input('Input the Index of good Trials (e.g. [1 2 3]): ');
 force_max_glob=mean(force_max_loc(good_trials));
+base_mean_glob=mean(base_mean_loc);
 %% -----------------------------------------------------------%
 %                             SAVE                            %
 %-------------------------------------------------------------%
 cd(SCRIPTPATH);
-save('calibration','force_max_glob');
+save('calibration','force_max_glob','base_mean_glob');
 
-filename = ['S',subj_num,'_', hand,'_MVC_',timepoint,'_',datestr(datetime)];%works on mc
-%filename = ['S',subj_num,'_', hand,'_MVC_',timepoint,'_',datestr(datetime,'yymmdd')];
+filename = ['S',subj_num,'_', hand,'_MVC_',timepoint,'_',datestr(datetime)];
 cd(PATHOUT);
 save(filename,'force_glob','force_glob_ind','force_max_glob');
  
