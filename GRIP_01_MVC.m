@@ -25,8 +25,8 @@ cd(SCRIPTPATH);
 %                      RESPONSE KEYS                          %
 %-------------------------------------------------------------%
 % CONECT TO DEVICE
-dyno = SSQ_connect_dyno;
-%dyno=[];
+%dyno = SSQ_connect_dyno;
+dyno=[];
 
 % KEYS
 KbName('UnifyKeyNames');% Consistent mapping of keyCodes to key names on all operating systems.
@@ -90,11 +90,11 @@ fixcrossLines = fixcrossLines';
 ifi = Screen('GetFlipInterval', window);
 
 force_duration = 3;  % all durations in secs
-interval_duration = [1 3 3];  % inter trial interval for fixation cross
+interval_duration = [1 10 10];  % inter trial interval for fixation cross
 prep_duration = 1; % prep cue
-frame_duration=1;
+frame_duration = 1;
 % DEFINE NUMBER OF REPETITIONS
-number_of_trials=3;
+number_of_trials = 3;
 
 %% -----------------------------------------------------------%
 %                    INSTRUCTIONS                             %
@@ -151,12 +151,12 @@ for n=1:number_of_trials
     % Draw FIXATION CROSS FOR PREP INTERVAL
     Screen('DrawLines',window,fixcrossLines,fixcrossWidth,black,[screenXcenter,screenYcenter-50])
     DrawFormattedText(window, text_prep, 'center', 'center', black);
-    prepOn = Screen('Flip', window, fixOn + prep_duration); 
+    prepOn = Screen('Flip', window); 
     
     % Draw FIXATION CROSS FOR CONTRACTION INTERVAL
     Screen('DrawLines',window,fixcrossLines,fixcrossWidth,green,[screenXcenter,screenYcenter-50])
     DrawFormattedText(window, text_task, 'center', 'center', black);
-    taskOn = Screen('Flip', window, prepOn + interval_duration(n)); 
+    taskOn = Screen('Flip', window, prepOn + prep_duration); 
     
     % RECORD FORCE DURING CONTRACTION 
     tic
