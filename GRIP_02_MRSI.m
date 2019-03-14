@@ -79,12 +79,6 @@ Rect_hight=500;
 Rect_frame = CenterRectOnPointd([0 0 Rect_width Rect_hight], screenXcenter, screenYcenter);
 
 %% -----------------------------------------------------------%
-%                          LINE                               %
-%-------------------------------------------------------------%
-level_num=str2num(level);
-Line_hight=(screenYcenter+(Rect_hight/2))-((Rect_hight*level_num)/100);
-
-%% -----------------------------------------------------------%
 %                          TIMING                             %
 %-------------------------------------------------------------%
 
@@ -92,8 +86,9 @@ Line_hight=(screenYcenter+(Rect_hight/2))-((Rect_hight*level_num)/100);
 ifi = Screen('GetFlipInterval', window);
 
 force_duration = 1;  % duration of contraction (s)
+relax_duration = 2; % duration of relax (s)
 total_time = 10*60; %=10 minutes
-number_of_trials = total_time/force_duration;
+number_of_trials = total_time/(force_duration+relax_duration);
 frame = 1;
 
 %% -----------------------------------------------------------%
@@ -151,6 +146,7 @@ for n=1:number_of_trials
         force=[force;force_temp Time_writeout];
         
         % TRANSLATE FORCE TO SCREEN SPACE
+        force_temp=(force_temp*100)/(str2num(level)*2);
         force_temp=(force_temp*Rect_hight)/100;
         if force_temp<0
             force_temp=0;
@@ -165,17 +161,19 @@ for n=1:number_of_trials
         if mod(n,2)
             Screen('FrameRect', window, orange, Rect_frame,2); 
             Textinst='R';
+            duration=relax_duration;
         else
             Screen('FrameRect', window, green, Rect_frame,2);
             Textinst='C';
+            duration=force_duration;
         end
             
         % DRAW SHORT INSTRUCTIONS
-        DrawFormattedText(window, Textinst, screenXcenter-Rect_width-10, screenYcenter, black);
-        DrawFormattedText(window, Textinst, screenXcenter+Rect_width, screenYcenter, black);
+        DrawFormattedText(window, Textinst, screenXcenter-50, screenYcenter-7, black);
+        DrawFormattedText(window, Textinst, screenXcenter+40, screenYcenter-7, black);
         
         % DRAW LINE
-        Screen('DrawLine', window,black,screenXcenter-Rect_width,Line_hight,screenXcenter+Rect_width,Line_hight,2);
+        Screen('DrawLine', window,black,screenXcenter-Rect_width,screenYcenter,screenXcenter+Rect_width,screenYcenter,5);
         
         % DRAW DOT
         Screen('DrawDots', window, [screenXcenter y_ball], 20, white, [], 2);
@@ -184,7 +182,7 @@ for n=1:number_of_trials
         segmentON = Screen('Flip', window);
         
         % END OF SQUEEZE
-        if toc(rate) >=force_duration
+        if toc(rate) >=duration
             break;
         end
     end

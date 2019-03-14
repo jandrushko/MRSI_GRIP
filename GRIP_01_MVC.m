@@ -25,18 +25,18 @@ cd(SCRIPTPATH);
 %                      RESPONSE KEYS                          %
 %-------------------------------------------------------------%
 % CONECT TO DEVICE
-%dyno = SSQ_connect_dyno;
-dyno=[];
+dyno = SSQ_connect_dyno;
+%dyno=[];
 
 % KEYS
-KbName('UnifyKeyNames');% Consistent mapping of keyCodes to key names on all operating systems.
-escapeKey = KbName('ESCAPE');
+KbName('UnifyKeyNames');% allows consistent mapping of keyCodes to key names on all operating systems
+escapeKey = KbName('ESCAPE'); % define esc key
 
 %% -----------------------------------------------------------%
 %                           PROMPT                            %
 %-------------------------------------------------------------%
 
-prompt = {'Subject Number:','Hand','Timepoint'};
+prompt = {'Subject Number:','Hand','Timepoint'}; 
 dlgname = 'Run Information';
 LineNo = 1;
 default  =  {'0','L-R','pre-post'};
@@ -76,7 +76,7 @@ screenRect = [0 0 1200 850]; % small window for testing purposes
 
 % PROPERTIES
 fixcrossLength = 20;
-fixcrossWidth =5;
+fixcrossWidth = 5;
 
 % COORDINATES
 fixcrossLines = [ -fixcrossLength, 0;fixcrossLength, 0;0, -fixcrossLength;0, fixcrossLength ];
@@ -89,10 +89,11 @@ fixcrossLines = fixcrossLines';
 % REFRESH RATE OF MONITOR
 ifi = Screen('GetFlipInterval', window);
 
-force_duration = 3;  % all durations in secs
-interval_duration = [1 10 10];  % inter trial interval for fixation cross
+force_duration = 3;  % interval of contraction (all durations in secs)
+interval_duration = [1 30 30];  % inter trial interval = relax
 prep_duration = 1; % prep cue
-frame_duration = 1;
+frame_duration = 1; % cut of 1 s from the start and 1 s from the end of the interval_duration and calc the mean of the remaining time
+
 % DEFINE NUMBER OF REPETITIONS
 number_of_trials = 3;
 
@@ -118,9 +119,9 @@ HideCursor; %hide mouse when experiment is on
 % DSIPLAY INSTRUCTIONS
 DrawFormattedText(window, text_start, 'center', 'center', black);
 Screen('Flip', window);
-WaitSecs(2);
+WaitSecs(2);% display instructions for 2 s than continue with the script
       
-for n=1:number_of_trials   
+for n=1:number_of_trials %repeats everythign for the number of trials  
     % Draw FIXATION CROSS
     Screen('DrawLines',window,fixcrossLines,fixcrossWidth,orange,[screenXcenter,screenYcenter-50])
     DrawFormattedText(window, text_relax, 'center', 'center', black);
@@ -185,9 +186,9 @@ for n=1:number_of_trials
     end %while
     
     % HAND OVER FORCE FROM CURRENT REPETITION
-    base_glob{n}=base_loc;
+    base_glob{n}=base_loc; % hand vector over to a cell as across trials, depending on the refrshrate, trials might have slightly different entries, despite beeing of same length
     force_glob{n}=force_loc;
-    force_glob_ind(n,:)=force_loc_ind;
+    force_glob_ind(n,:)=force_loc_ind; % this is always only two values, and thus can be handed over to a matrix
 end
 
 % DSIPLAY FINAL TEXT
