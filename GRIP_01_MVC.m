@@ -25,8 +25,8 @@ cd(SCRIPTPATH);
 %                      RESPONSE KEYS                          %
 %-------------------------------------------------------------%
 % CONECT TO DEVICE
-dyno = SSQ_connect_dyno;
-%dyno=[];
+%dyno = SSQ_connect_dyno;
+dyno=[];
 
 % KEYS
 KbName('UnifyKeyNames');% allows consistent mapping of keyCodes to key names on all operating systems
@@ -125,7 +125,7 @@ for n=1:number_of_trials %repeats everythign for the number of trials
     % Draw FIXATION CROSS
     Screen('DrawLines',window,fixcrossLines,fixcrossWidth,orange,[screenXcenter,screenYcenter-50])
     DrawFormattedText(window, text_relax, 'center', 'center', black);
-    fixOn = Screen('Flip', window); 
+    Screen('Flip', window); 
     
     % RECORD FORCE DURING REST TO DETERMINE OFFSET 
     tic
@@ -226,7 +226,11 @@ for n=1:length(force_glob)
     title({['Repetition: ',num2str(n)],['Mean: ',num2str(force_max_loc(n))]},'interp','none');
     
     % GET 'OFFSET'
-    base_mean_loc(n)=median(base_glob{n});
+    if n==1
+        base_mean_loc(n)=mean(base_glob{n})+(std(base_glob{n})*1);
+    else
+        base_mean_loc(n)=mean(base_glob{n}(2000:end))+(std(base_glob{n})*1);
+    end
 end
 
 good_trials=input('Input the Index of good Trials (e.g. [1 2 3]): ');
